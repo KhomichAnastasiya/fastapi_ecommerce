@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+#Маршрутизатор
 router = APIRouter(
     prefix="/categories",
     tags=["categories"]
