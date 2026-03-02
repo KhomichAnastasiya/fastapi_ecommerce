@@ -1,17 +1,19 @@
 from pydantic import BaseModel, Field, ConfigDict
 from decimal import Decimal
 
+
 class CategoruCreate(BaseModel):
     """
-    Модель для создания и обновления категории.
+    A model for creating and updating a category.
     """
     name: str = Field(..., min_length=3, max_length=50,
                       description="Название категории (3-50 символов)")
     parent_id: int | None = Field(None, description="ID родительской категории, если есть")
 
+
 class Category(BaseModel):
     """
-    Модель для ответа с данными категории.
+    A model for responding with category data.
     """
     id: int = Field(..., description="Уникальный идентификатор категории")
     name: str = Field(..., description="Название категории")
@@ -20,9 +22,10 @@ class Category(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class ProductCreate(BaseModel):
     """
-    Модель для создания и обновления товара.
+    A model for creating and updating a product.
     """
     name: str = Field(..., min_length=3, max_length=100,
                       description="Название товара (3-100 символов)")
@@ -33,9 +36,10 @@ class ProductCreate(BaseModel):
     stock: int = Field(..., ge=0, description="Количество товара на складе (0 или больше)")
     category_id: int = Field(..., description="ID категории, к которой относится товар")
 
+
 class Product(BaseModel):
     """
-    Модель для ответа с данными товара.
+    The response model with the product data.
     """
     id: int = Field(..., description="Уникальный идентификатор товара")
     name: str = Field(..., description="Название товара")
