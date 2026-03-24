@@ -18,7 +18,7 @@ class Category(Base):
         back_populates="category"
     )
 
-    parent: Mapped["Category | None"] = relationship(
+    parent: Mapped["Category | None"] = relationship
         "Category",
         back_populates="children",
         remote_side="Category.id"
