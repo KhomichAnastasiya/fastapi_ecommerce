@@ -1,55 +1,138 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select, update, and_
+from sqlalchemy.orm import Session
 
-#The router
+from app.models.products import Product as ProductModel
+from app.models.categories import Category as CategoryModel
+from app.schemas import Product as ProductSchema, ProductCreate
+from app.db_depends import get_db
+
 router = APIRouter(
     prefix="/products",
     tags=["products"]
 )
 
 
-@router.get("/")
-async def get_all_products():
+@router.get(
+    "/",
+    response_model=list[ProductSchema]
+)
+async def get_all_products(db: Session = Depends(get_db)):
     """
     Returns a list of all products.
     """
-    return {"message": "Список всех товаров (заглушка)"}
+    stmt = select(ProductModel).where(ProductModel.is_active)
+    products = db.scalars(stmt).all()
+    return products
 
 
-@router.post("/")
-async def create_product():
+@router.post(
+    "/",
+    response_model=ProductSchema,
+    status_code=status.HTTP_201_CREATED
+)
+async def create_product(product: ProductCreate, db: Session = Depends(get_db)):
     """
     Creates a new product.
     """
-    return {"message": "Товар создан (заглушка)"}
+    stmt = select(CategoryModel).where(CategoryModel.id == product.category_id)
+    category = db.scalars(stmt).first()
+    if category is None:
+        raise HTTPException(status_code=400, detail="Category not found or inactive")
+
+    db_product = ProductModel(**product.model_dump())
+    db.add(db_product)
+    db.commit()
+    db.refresh(db_product)
+    return db_product
 
 
-@router.get("/category/{category_id}")
-async def get_products_by_category(category_id: int):
+@router.get(
+    "/category/{category_id}",
+    response_model=list[ProductSchema],
+    status_code=status.HTTP_200_OK
+)
+async def get_products_by_category(category_id: int, db: Session = Depends(get_db)):
     """
     Retrieves the list of products in the specified category by its ID.
     """
-    return {"message": f"Товары в категории {category_id} (заглушка)"}
+    stmt = select(CategoryModel).where(and_(CategoryModel.id == category_id,
+                                            CategoryModel.is_active))
+    category = db.scalars(stmt).first()
+    if category is None:
+        raise HTTPException(status_code=404, detail="Category not found or inactive")
+
+    stmt = select(ProductModel).where(ProductModel.category_id == category_id)
+    products = db.scalars(stmt).all()
+    return products
 
 
-@router.get("/{product_id}")
-async def get_product(product_id: int):
+@router.get(
+    "/{product_id}",
+    response_model=ProductSchema,
+    status_code=status.HTTP_200_OK
+)
+async def get_product(product_id: int, db: Session = Depends(get_db)):
     """
     Returns detailed information about the product by its ID.
     """
-    return {"message": f"Детали товара {product_id} (заглушка)"}
+    stmt = select(ProductModel).where(and_(ProductModel.id == product_id,
+                                           ProductModel.is_active))
+    product = db.scalars(stmt).first()
+    if product is None:
+        raise HTTPException(status_code=404, detail="Product not found or inactive")
+    return product
 
 
-@router.put("/{product_id}")
-async def update_product(product_id: int):
+@router.put(
+    "/{product_id}",
+    response_model=ProductSchema,
+    status_code=status.HTTP_200_OK
+)
+async def update_product(product_id: int, product: ProductCreate,
+                         db: Session = Depends(get_db)):
     """
     Updates the product by its ID.
     """
-    return {"message": f"Товар {product_id} обновлён (заглушка)"}
+    stmt = select(ProductModel).where(and_(ProductModel.id == product_id,
+                                           ProductModel.is_active))
+    db_product = db.scalars(stmt).first()
+    if db_product is None:
+        raise HTTPException(status_code=404, detail="Product not found or inactive")
+
+    stmt = select(CategoryModel).where(and_(CategoryModel.id == product.category_id,
+                                            CategoryModel.is_active))
+    category = db.scalars(stmt).first()
+    if category is None:
+        raise HTTPException(status_code=400, detail="Category not found or inactive")
+
+    db.execute(
+        update(ProductModel)
+        .where(ProductModel.id == product_id)
+        .values(**product.model_dump())
+    )
+    db.commit()
+    db.refresh(db_product)
+    return db_product
 
 
-@router.delete("/{product_id}")
-async def delete_product(product_id: int):
+@router.delete(
+    "/{product_id}",
+    status_code=status.HTTP_200_OK
+)
+async def delete_product(product_id: int, db: Session = Depends(get_db)):
     """
     Deletes an item by its ID.
     """
-    return {"message": f"Товар {product_id} удалён (заглушка)"}
+    stmt = select(ProductModel).where(and_(ProductModel.id == product_id,
+                                           ProductModel.is_active))
+    product = db.scalars(stmt).first()
+    if product is None:
+        raise HTTPException(status_code=404, detail="Product not found or inactive")
+
+    db.execute(
+        update(ProductModel)
+        .where(ProductModel.id == product_id)
+        .values(is_active=False))
+    db.commit()
+    return {"status": "success", "message": "Product marked as inactive"}

@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field, ConfigDict
 from decimal import Decimal
 
 
-class CategoruCreate(BaseModel):
+class CategoryCreate(BaseModel):
     """
     A model for creating and updating a category.
     """
