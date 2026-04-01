@@ -81,3 +81,13 @@ async def get_current_seller(current_user: UserModel = Depends(get_current_user)
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail="Only sellers can perform this action")
     return current_user
+
+
+async def get_current_admin(current_user: UserModel = Depends(get_current_user)):
+    """
+    Verifies that the user has the 'admin' role.
+    """
+    if current_user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="Only admins can perform this action")
+    return current_user

@@ -1,10 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.params import Depends
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.categories import Category as CategoryModel
 from app.schemas import Category as CategorySchema, CategoryCreate
+from app.models.users import User as UserModel
 from app.db_depends import get_async_db
+from app.auth import get_current_admin
 
 router = APIRouter(
     prefix="/categories",
@@ -32,7 +35,8 @@ async def get_all_categories(db: AsyncSession = Depends(get_async_db)):
     status_code=status.HTTP_201_CREATED
 )
 async def create_category(category: CategoryCreate,
-                          db: AsyncSession = Depends(get_async_db)):
+                          db: AsyncSession = Depends(get_async_db),
+                          _current_user: UserModel = Depends(get_current_admin)):
     """
     Creates a new category.
     """
@@ -56,7 +60,8 @@ async def create_category(category: CategoryCreate,
     response_model=CategorySchema
 )
 async def update_category(category_id: int, category: CategoryCreate,
-                          db: AsyncSession = Depends(get_async_db)):
+                          db: AsyncSession = Depends(get_async_db),
+                          _current_user: UserModel = Depends(get_current_admin)):
     """
     Updates a category by its ID.
     """
@@ -96,7 +101,9 @@ async def update_category(category_id: int, category: CategoryCreate,
     "/{category_id}",
     status_code=status.HTTP_200_OK
 )
-async def delete_category(category_id: int, db: AsyncSession = Depends(get_async_db)):
+async def delete_category(category_id: int,
+                          db: AsyncSession = Depends(get_async_db),
+                          _current_user: UserModel = Depends(get_current_admin)):
     """
     Deletes a category by its ID.
     """
