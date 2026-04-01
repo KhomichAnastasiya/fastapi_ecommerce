@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, EmailStr
 from decimal import Decimal
 
 
@@ -50,6 +50,27 @@ class Product(BaseModel):
     category_id: int = Field(..., description="ID категории")
     is_active: bool = Field(..., description="Активность товара")
 
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserCreate(BaseModel):
+    """
+    A model for creating and updating a user.
+    """
+    email: EmailStr = Field(description="Email пользователя")
+    password: str = Field(min_length=8, description="Пароль (минимум 8 символов)")
+    role: str = Field(default="buyer", pattern="^(buyer|seller)$",
+                      description="Роль: 'buyer' или 'seller'")
+
+
+class User(BaseModel):
+    """
+    The response model with the user data.
+    """
+    id: int
+    email: EmailStr
+    is_active: bool
+    role: str
     model_config = ConfigDict(from_attributes=True)
 
 
