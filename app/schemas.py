@@ -59,8 +59,8 @@ class UserCreate(BaseModel):
     """
     email: EmailStr = Field(description="Email пользователя")
     password: str = Field(min_length=8, description="Пароль (минимум 8 символов)")
-    role: str = Field(default="buyer", pattern="^(buyer|seller)$",
-                      description="Роль: 'buyer' или 'seller'")
+    role: str = Field(default="buyer", pattern="^(buyer|seller|admin)$",
+                      description="Роль: 'buyer','seller' или 'admin'")
 
 
 class User(BaseModel):
@@ -72,5 +72,9 @@ class User(BaseModel):
     is_active: bool
     role: str
     model_config = ConfigDict(from_attributes=True)
+
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
 
 
