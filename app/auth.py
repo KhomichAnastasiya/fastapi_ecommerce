@@ -9,6 +9,7 @@ from sqlalchemy import select
 from app.models.users import User as UserModel
 from app.config import SECRET_KEY, ALGORITHM
 from app.db_depends import get_async_db
+from app.globals import USER_ROLE_ADMIN, USER_ROLE_SELLER, USER_ROLE_BUYER
 
 
 # Creating a context for hashing using bcrypt
@@ -90,7 +91,7 @@ async def get_current_seller(current_user: UserModel = Depends(get_current_user)
     """
     Verifies that the user has the 'seller' role.
     """
-    if current_user.role != "seller":
+    if current_user.role != USER_ROLE_SELLER:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail="Only sellers can perform this action")
     return current_user
@@ -100,7 +101,17 @@ async def get_current_admin(current_user: UserModel = Depends(get_current_user))
     """
     Verifies that the user has the 'admin' role.
     """
-    if current_user.role != "admin":
+    if current_user.role != USER_ROLE_ADMIN:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail="Only admins can perform this action")
+    return current_user
+
+
+async def get_current_buyer(current_user: UserModel = Depends(get_current_user)):
+    """
+    Verifies that the user has the 'buyer' role.
+    """
+    if current_user.role != USER_ROLE_BUYER:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="Only sellers can perform this action")
     return current_user
