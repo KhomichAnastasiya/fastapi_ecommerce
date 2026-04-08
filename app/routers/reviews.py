@@ -42,31 +42,6 @@ async def get_all_reviews(db: AsyncSession = Depends(get_async_db)):
     return result.all()
 
 
-@router.get(
-    "/{product_id}/reviews/",
-    response_model=list[ReviewSchema]
-)
-async def get_all_product_reviews(product_id: int, db: AsyncSession = Depends(get_async_db)):
-    """
-    Returns a list of all reviews for the product.
-    """
-    stmt = select(ProductModel).where(ProductModel.id == product_id,
-                                      ProductModel.is_active)
-    product = await db.scalar(stmt)
-    if product is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail="Product not found or inactive")
-
-    stmt = select(ReviewModel).where(product.id == product_id,
-                                     ReviewModel.is_active)
-    result_review = await db.scalars(stmt)
-    reviews = result_review.all()
-    if reviews is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail = "Reviews not found or inactive")
-    return reviews
-
-
 @router.post(
     "/",
     response_model=ReviewSchema,
