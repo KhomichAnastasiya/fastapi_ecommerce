@@ -8,7 +8,7 @@ from app.globals import (PRODUCT_MIN_GRADE, PRODUCT_MAX_GRADE,
                          PRODUCT_IMAGE_URL_MAX_LENGTH,
                          CATEGORY_NAME_MIN_LENGTH, CATEGORY_NAME_MAX_LENGTH,
                          USER_PASSWORD_MIN_LENGTH,
-                         USER_ROLE_BUYER)
+                         USER_ROLE_BUYER, USER_ROLE_SELLER, USER_ROLE_ADMIN)
 
 
 class CategoryCreate(BaseModel):
@@ -17,7 +17,8 @@ class CategoryCreate(BaseModel):
     """
     name: str = Field(..., min_length=CATEGORY_NAME_MIN_LENGTH,
                       max_length=CATEGORY_NAME_MAX_LENGTH,
-                      description="Название категории (3-50 символов)")
+                      description=f"Название категории ({CATEGORY_NAME_MIN_LENGTH}"
+                                  f"-{CATEGORY_NAME_MAX_LENGTH} символов)")
     parent_id: int | None = Field(None, description="ID родительской категории, если есть")
 
 
@@ -39,9 +40,12 @@ class ProductCreate(BaseModel):
     """
     name: str = Field(..., min_length=PRODUCT_NAME_MIN_LENGTH,
                       max_length=PRODUCT_NAME_MAX_LENGTH,
-                      description="Название товара (3-100 символов)")
+                      description=f"Название товара ({PRODUCT_NAME_MIN_LENGTH}"
+                                  f"-{PRODUCT_NAME_MAX_LENGTH} символов)")
     description: str | None = Field(None, max_length=PRODUCT_DESCRIPTION_MAX_LENGTH,
-                                    description="Описание товара (до 500 символов)")
+                                    description=f"Описание товара (до"
+                                                f" {PRODUCT_DESCRIPTION_MAX_LENGTH}"
+                                                f" символов)")
     price: Decimal = Field(..., gt=0, description="Цена товара (больше 0)", decimal_places=2)
     image_url: str | None = Field(None, max_length=PRODUCT_IMAGE_URL_MAX_LENGTH,
                                   description="URL изображения товара")
@@ -72,9 +76,13 @@ class UserCreate(BaseModel):
     """
     email: EmailStr = Field(description="Email пользователя")
     password: str = Field(min_length=USER_PASSWORD_MIN_LENGTH,
-                          description="Пароль (минимум 8 символов)")
-    role: str = Field(default=USER_ROLE_BUYER, pattern="^(buyer|seller|admin)$",
-                      description="Роль: 'buyer','seller' или 'admin'")
+                          description=f"Пароль (минимум {USER_PASSWORD_MIN_LENGTH} "
+                                      f"символов)")
+    role: str = Field(default=USER_ROLE_BUYER, pattern=f"^({USER_ROLE_BUYER}"
+                                                       f"|{USER_ROLE_SELLER}"
+                                                       f"|{USER_ROLE_ADMIN})$",
+                      description=f"Роль: '{USER_ROLE_BUYER}','{USER_ROLE_SELLER}' "
+                                  f"или '{USER_ROLE_ADMIN}'")
 
 
 class User(BaseModel):
