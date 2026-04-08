@@ -82,14 +82,16 @@ async def create_review_for_product(new_review: ReviewCreate,
                                        ProductModel.is_active)
     product = await db.scalar(stmt)
     if product is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail = "Product not found or inactive")
 
     stmt = select(ReviewModel).where(ReviewModel.product_id == new_review.product_id,
                                      ReviewModel.is_active)
     result_reviews = await db.scalars(stmt)
     reviews = result_reviews.all()
     if reviews is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail="Reviews not found or inactive")
 
     stmt = select(ReviewModel).where(ReviewModel.product_id == new_review.product_id,
                                      ReviewModel.user_id == _current_user.id,
@@ -126,10 +128,12 @@ async def delete_review(review_id: int, db: AsyncSession = Depends(get_async_db)
                                      ReviewModel.is_active)
     review = await db.scalar(stmt)
     if review is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail="Review not found or inactive")
 
     if current_user.role != USER_ROLE_ADMIN and current_user.id != review.user_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="Only admin or review owner can delete this review")
 
     await db.execute(
         update(ReviewModel)
