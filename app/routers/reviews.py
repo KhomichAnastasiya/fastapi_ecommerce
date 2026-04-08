@@ -91,6 +91,14 @@ async def create_review_for_product(new_review: ReviewCreate,
     if reviews is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
+    stmt = select(ReviewModel).where(ReviewModel.product_id == new_review.product_id,
+                                     ReviewModel.user_id == _current_user.id,
+                                     ReviewModel.is_active)
+    existing_review = await db.scalar(stmt)
+    if existing_review:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                            detail="You have already reviewed this product.")
+
     db_review = ReviewModel(
         product_id = new_review.product_id,
         user_id = _current_user.id,
