@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, ConfigDict, EmailStr
+from pydantic import BaseModel, Field, field_validator, ConfigDict, EmailStr
 from decimal import Decimal
 from datetime import datetime
 
@@ -6,6 +6,9 @@ from app.globals import (PRODUCT_MIN_GRADE, PRODUCT_MAX_GRADE,
                          PRODUCT_NAME_MIN_LENGTH, PRODUCT_NAME_MAX_LENGTH,
                          PRODUCT_DESCRIPTION_MAX_LENGTH,
                          PRODUCT_IMAGE_URL_MAX_LENGTH,
+                         PRODUCT_LIST_PAGE_NUMBER_DEFAULT,
+                         PRODUCT_LIST_PAGE_SIZE_MIN, PRODUCT_LIST_PAGE_SIZE_MAX,
+                         PRODUCT_LIST_PAGE_SIZE_DEFAULT,
                          CATEGORY_NAME_MIN_LENGTH, CATEGORY_NAME_MAX_LENGTH,
                          USER_PASSWORD_MIN_LENGTH,
                          USER_ROLE_BUYER, USER_ROLE_SELLER, USER_ROLE_ADMIN)
@@ -66,8 +69,49 @@ class Product(BaseModel):
     category_id: int = Field(..., description="ID категории")
     is_active: bool = Field(..., description="Активность товара")
     rating: float = Field(..., description="Рейтинг товара")
+    created_at: datetime = Field(..., description="Дата создания записи о продукте")
+    updated_at: datetime = Field(..., description="Дата обновления записи о продукте")
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ProductList(BaseModel):
+    """
+    A list of paginations for products.
+    """
+    items: list[Product] = Field(description="Товары для текущей страницы")
+    total: int = Field(ge=0, description="Общее количество товаров")
+    page: int = Field(ge=1, description="Номер текущей страницы")
+    page_size: int = Field(ge=1, description="Количество элементов на странице")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ProductRequestFilter(BaseModel):
+    """
+    Product request filter.
+    """
+    page: int = Field(ge=PRODUCT_LIST_PAGE_NUMBER_DEFAULT,
+                      default=PRODUCT_LIST_PAGE_NUMBER_DEFAULT,
+                      description="Номер страница для пагинации")
+    page_size: int = Field(ge=PRODUCT_LIST_PAGE_SIZE_MIN,
+                           le=PRODUCT_LIST_PAGE_SIZE_MAX,
+                           default=PRODUCT_LIST_PAGE_SIZE_DEFAULT,
+                           description="Количество товаров на одной странице")
+    category_id: int | None = Field(None, ge=1, description="ID категории для фильтрации")
+    min_price: float | None = Field(None, ge=0, description="Минимальная цена товара")
+    max_price: float | None = Field(None, ge=0, description="Максимальная цена товара")
+    in_stock: bool | None = Field(None, description="true — только товары в наличии, "
+                                                    "false — только без остатка")
+    seller_id: int | None = Field(None, description="ID продавца для фильтрации")
+
+    @field_validator('category_id', 'seller_id', mode='before')
+    @classmethod
+    def convert_zero_to_none(cls, v):
+        """Converts 0 to None (the client sometimes sends 0 instead of null)"""
+        if v == 0:
+            return None
+        return v
 
 
 class UserCreate(BaseModel):
